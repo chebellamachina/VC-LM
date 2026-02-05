@@ -19,6 +19,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ============== SIMPLE AUTHENTICATION ==============
+# Password stored in Streamlit secrets (or fallback for local dev)
+APP_PASSWORD = st.secrets.get("app_password", "vcpagos2024")
+
+def check_password():
+    """Returns True if the user has entered the correct password."""
+
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if st.session_state.authenticated:
+        return True
+
+    # Show login form
+    st.title("🔐 Sistema de Solicitud de Pagos")
+    st.markdown("---")
+
+    with st.form("login_form"):
+        password = st.text_input("Contraseña", type="password", placeholder="Ingrese la contraseña")
+        submitted = st.form_submit_button("Ingresar", use_container_width=True)
+
+        if submitted:
+            if password == APP_PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("❌ Contraseña incorrecta")
+
+    return False
+
+# Check authentication before showing the app
+if not check_password():
+    st.stop()
+
 # Initialize database
 init_database()
 
@@ -96,6 +130,12 @@ def get_status_badge(status: str) -> str:
 
 # Sidebar navigation
 st.sidebar.title("💰 Sistema de Pagos")
+
+# Logout button
+if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
+    st.session_state.authenticated = False
+    st.rerun()
+
 st.sidebar.markdown("---")
 
 view = st.sidebar.radio(
